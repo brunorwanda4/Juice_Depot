@@ -9,7 +9,7 @@ require("./config/db"); // This should ideally export the db object or ensure it
 const userRoutes = require("./routes/userRoutes"); // Renamed from authRoutes for clarity
 const productRoutes = require("./routes/productRoutes");
 const stockRoutes = require("./routes/stockRoutes");
-
+const authRoutes = require("./routes/authRoutes")
 const app = express();
 
 // Middleware
@@ -23,6 +23,7 @@ app.get("/", (req, res) => {
 });
 
 // API Routes
+app.use("/api", authRoutes)
 app.use("/api", userRoutes); // All user-related routes will be prefixed with /api
 app.use("/api", productRoutes); // All product-related routes will be prefixed with /api
 app.use("/api", stockRoutes); // All stock-related routes will be prefixed with /api
