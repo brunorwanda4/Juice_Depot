@@ -2,6 +2,8 @@ const bcrypt = require("bcrypt");
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
 
+const JWT_SECRET = process.env.JWT_SECRET || "MamaHappy"; 
+
 exports.signup = (req, res) => {
   const { username, password, userType } = req.body;
 
@@ -76,7 +78,7 @@ exports.signup = (req, res) => {
           return res.status(500).json({
             message: "Failed to process password.",
             error: hashErr.message,
-          });
+            });
         });
     }
   );
@@ -118,13 +120,23 @@ exports.login = (req, res) => {
             .json({ message: "Login failed.", error: bcryptErr.message });
         }
         if (match) {
-          // In a real app, you'd generate a JWT here
+          // Generate JWT token
+          const token = jwt.sign(
+            {
+              userId: user.userId,
+              username: user.userName,
+              userType: user.userType,
+            },
+            JWT_SECRET, // Your secret key
+            { expiresIn: "1h" } // Token expiration time (e.g., 1 hour)
+          );
+
           return res.status(200).json({
             message: "Login successful.",
             userId: user.userId,
             username: user.userName,
             userType: user.userType,
-            // token: "your_generated_jwt_token" // Example
+            token: token, // Include the generated token in the response
           });
         } else {
           return res

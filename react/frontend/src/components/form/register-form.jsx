@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
@@ -120,7 +121,7 @@ const RegisterForm = () => {
             <div className="form-control mt-6">
               <button
                 type="submit"
-                className={`btn btn-secondary w-full rounded-box ${
+                className={`btn btn-primary w-full rounded-box ${
                   isLoading ? "loading" : ""
                 }`}
                 disabled={isLoading}
@@ -132,9 +133,9 @@ const RegisterForm = () => {
 
           {/* Optional login link */}
           <div className="mt-6 text-center">
-            <button className="btn btn-link">
+            <Link to={"/"} className="btn btn-link">
               Already have an account? Login
-            </button>
+            </Link>
           </div>
         </div>
       </div>
