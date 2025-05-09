@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom"; // Import useNavigate for redirection
-import UseAuth from "../../hooks/useAuth";
+import UseAuth from "../../hooks/useAuth"; // Adjust the path as needed
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
@@ -11,6 +11,7 @@ const LoginForm = () => {
   const [messageType, setMessageType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Get the login function from your UseAuth hook
   const { login } = UseAuth();
   const navigate = useNavigate();
 
@@ -43,8 +44,9 @@ const LoginForm = () => {
         setMessage(response.data.message || "Login successful!");
         setMessageType("success");
 
-        // Redirect the user after successful login
-        // Replace '/dashboard' with the path you want to redirect to
+        // Redirect the user to the general dashboard route.
+        // The Dashboard component will then read the user's role from UseAuth
+        // and redirect them to the specific admin or worker dashboard page.
         navigate("/dashboard");
 
       } else {
@@ -52,7 +54,6 @@ const LoginForm = () => {
         setMessage("Login successful, but no token received.");
         setMessageType("error"); // Or 'warning', depending on how you want to handle this
       }
-
 
     } catch (error) {
       if (error.response) {

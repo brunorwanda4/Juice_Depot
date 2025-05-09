@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const RegisterForm = () => {
   const [username, setUsername] = useState("");
@@ -11,7 +11,7 @@ const RegisterForm = () => {
   const [messageType, setMessageType] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
-
+  const navigate = useNavigate();
   const handleRegisterSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -40,6 +40,7 @@ const RegisterForm = () => {
       setUsername("");
       setPassword("");
       setUserType("WORKER");
+      navigate("/")
     } catch (error) {
       if (error.response) {
         const serverMsg =

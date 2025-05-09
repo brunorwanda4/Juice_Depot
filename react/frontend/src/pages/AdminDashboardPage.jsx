@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import UseAuth from "./UseAuth"; // Adjust the path as needed
 // import axios from "axios"; // Assuming you'll use axios for API calls
 import { useNavigate } from "react-router-dom"; // To redirect if not authenticated or not admin
+import UseAuth from "../hooks/useAuth";
 
 const AdminDashboardPage = () => {
   const { user, isAdmin, loading } = UseAuth(); // Get user, isAdmin, and loading from the hook
