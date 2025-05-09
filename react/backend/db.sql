@@ -1,4 +1,5 @@
-CREATE DATABASE IF NOT EXISTS Juice_Depot;
+DROP DATABASE Juice_Depot;
+CREATE DATABASE Juice_Depot;
 USE Juice_Depot;
 
 CREATE TABLE Users (
