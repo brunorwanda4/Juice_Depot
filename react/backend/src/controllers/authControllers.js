@@ -1,8 +1,8 @@
 const bcrypt = require("bcrypt");
 const db = require("../config/db");
 const jwt = require("jsonwebtoken");
+
 exports.signup = (req, res) => {
-  // Removed 'async'
   const { username, password, userType } = req.body;
 
   if (!username || !password || !userType) {
