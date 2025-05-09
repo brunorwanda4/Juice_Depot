@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate for redirection
+import UseAuth from "../../hooks/useAuth";
 
 const LoginForm = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // 'success' or 'error'
+  const [messageType, setMessageType] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const { login } = UseAuth();
+  const navigate = useNavigate();
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -29,12 +33,26 @@ const LoginForm = () => {
         password,
       });
 
-      setMessage(response.data.message || "Login successful!");
-      setMessageType("success");
+      // Assuming your backend sends the token in response.data.token
+      const receivedToken = response.data.token;
 
-      // Example: Store token or redirect
-      // localStorage.setItem("token", response.data.token);
-      // navigate("/dashboard");
+      if (receivedToken) {
+        // Use the login function from the UseAuth hook to store the token and update state
+        login(receivedToken);
+
+        setMessage(response.data.message || "Login successful!");
+        setMessageType("success");
+
+        // Redirect the user after successful login
+        // Replace '/dashboard' with the path you want to redirect to
+        navigate("/dashboard");
+
+      } else {
+        // Handle case where token is not received from backend
+        setMessage("Login successful, but no token received.");
+        setMessageType("error"); // Or 'warning', depending on how you want to handle this
+      }
+
 
     } catch (error) {
       if (error.response) {
