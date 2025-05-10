@@ -1,0 +1,1227 @@
+// Suggested File Structure:
+// src/
+// |-- App.js (Your existing file)
+// |-- layouts/
+// |   |-- AdminLayout.js (Updated)
+// |   |-- protectedRouters.js (Your existing file)
+// |-- pages/
+// |   |-- admin/
+// |   |   |-- ManageUsersPage.js
+// |   |   |-- ManageProductsPage.js
+// |   |   |-- ManageStockInPage.js
+// |   |   |-- ManageStockOutPage.js
+// |   |-- AdminDashboardPage.js (Your existing or a simple placeholder)
+// |   |-- loginPage.js (Your existing file)
+// |   |-- ... (other page files)
+// |-- components/
+// |   |-- asides/
+// |   |   |-- AdminAside.js (Your existing file)
+// |   |-- crud/
+// |   |   |-- UsersTable.js
+// |   |   |-- UserForm.js
+// |   |   |-- ProductsTable.js
+// |   |   |-- ProductForm.js
+// |   |   |-- StockInTable.js
+// |   |   |-- StockInForm.js
+// |   |   |-- StockOutTable.js
+// |   |   |-- StockOutForm.js
+// |   |   |-- DeleteConfirmationModal.js
+// |   |-- RedirectIfAuthenticated.js (Your existing file)
+// |-- index.js or main.jsx (Your main React entry point)
+
+// -------------------------------------------------------------------
+// File: src/layouts/AdminLayout.js (Updated)
+// -------------------------------------------------------------------
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import AdminAside from '../components/asides/AdminAside'; // Your existing component
+import AdminDashboardPage from '../pages/AdminDashboardPage'; // Assuming this page exists
+
+// Import the new CRUD pages
+import ManageUsersPage from '../pages/admin/ManageUsersPage';
+import ManageProductsPage from '../pages/admin/ManageProductsPage';
+import ManageStockInPage from '../pages/admin/ManageStockInPage';
+import ManageStockOutPage from '../pages/admin/ManageStockOutPage';
+
+const AdminLayout = () => {
+  return (
+    <div className="flex min-h-screen bg-base-200 text-base-content">
+      <AdminAside />
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+        {/* This container ensures content doesn't stretch too wide on large screens */}
+        <div className="max-w-7xl mx-auto">
+          <Routes>
+            {/* Default page for /admin/dashboard */}
+            <Route index element={<AdminDashboardPage />} />
+            {/* Route for /admin/dashboard/users */}
+            <Route path="users" element={<ManageUsersPage />} />
+            {/* Route for /admin/dashboard/products */}
+            <Route path="products" element={<ManageProductsPage />} />
+            {/* Route for /admin/dashboard/stock-in */}
+            <Route path="stock-in" element={<ManageStockInPage />} />
+            {/* Route for /admin/dashboard/stock-out */}
+            <Route path="stock-out" element={<ManageStockOutPage />} />
+            {/* You can add more nested routes here if needed */}
+          </Routes>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default AdminLayout;
+
+// -------------------------------------------------------------------
+// File: src/pages/AdminDashboardPage.js (Placeholder if you don't have one)
+// -------------------------------------------------------------------
+// import React from 'react';
+
+// const AdminDashboardPage = () => {
+//   return (
+//     <div className="p-6">
+//       <h1 className="text-3xl font-bold mb-6 text-primary">Admin Dashboard</h1>
+//       <div className="bg-base-100 p-6 rounded-lg shadow-md">
+//         <p className="text-lg">Welcome to the Juice Depot Admin Dashboard.</p>
+//         <p className="mt-2">Select an option from the sidebar to manage different aspects of the application.</p>
+//       </div>
+//     </div>
+//   );
+// };
+// export default AdminDashboardPage;
+
+// -------------------------------------------------------------------
+// File: src/components/crud/DeleteConfirmationModal.js
+// -------------------------------------------------------------------
+import React, { useRef, useEffect } from 'react';
+
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm, itemName }) => {
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      modalRef.current?.showModal();
+    } else {
+      modalRef.current?.close();
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null; // Or handle visibility purely with dialog's open/close methods
+
+  return (
+    <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
+      <div className="modal-box">
+        <h3 className="font-bold text-lg text-error">Confirm Deletion</h3>
+        <p className="py-4">Are you sure you want to delete "{itemName || 'this item'}"? This action cannot be undone.</p>
+        <div className="modal-action">
+          <button className="btn btn-outline" onClick={() => { onClose(); modalRef.current?.close(); }}>Cancel</button>
+          <button className="btn btn-error" onClick={onConfirm}>Delete</button>
+        </div>
+      </div>
+      {/* Optional: Click outside to close */}
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+};
+
+export default DeleteConfirmationModal;
+
+
+// -------------------------------------------------------------------
+// File: src/components/crud/UserForm.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useRef } from 'react';
+
+const UserForm = ({ isOpen, onClose, onSubmit, initialData }) => {
+  const [formData, setFormData] = useState({
+    userName: '',
+    passWord: '',
+    userType: 'WORKER', // Default user type
+  });
+  const [error, setError] = useState('');
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        userName: initialData.userName || '',
+        // Password should generally not be pre-filled for editing for security.
+        // If updating password, it should be a separate flow or clearly indicated.
+        passWord: '', // Clear password for edit form
+        userType: initialData.userType || 'WORKER',
+      });
+    } else {
+      // Reset for new user
+      setFormData({ userName: '', passWord: '', userType: 'WORKER' });
+    }
+  }, [initialData]);
+
+
+  useEffect(() => {
+    if (isOpen) {
+      modalRef.current?.showModal();
+      setError(''); // Clear previous errors when modal opens
+    } else {
+      modalRef.current?.close();
+    }
+  }, [isOpen]);
+
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.userName || (!initialData && !formData.passWord) || !formData.userType) {
+      setError('All fields except password (for update) are required.');
+      return;
+    }
+    onSubmit(formData);
+  };
+
+  const formTitle = initialData ? "Edit User" : "Add New User";
+  const submitButtonText = initialData ? "Update User" : "Create User";
+
+  if (!isOpen) return null;
+
+  return (
+    <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
+      <div className="modal-box w-11/12 max-w-lg">
+        <h3 className="font-bold text-xl mb-6 text-primary">{formTitle}</h3>
+        {error && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label">
+              <span className="label-text">Username</span>
+            </label>
+            <input
+              type="text"
+              name="userName"
+              value={formData.userName}
+              onChange={handleChange}
+              placeholder="Enter username"
+              className="input input-bordered w-full"
+              required
+            />
+          </div>
+          <div>
+            <label className="label">
+              <span className="label-text">Password</span>
+            </label>
+            <input
+              type="password"
+              name="passWord"
+              value={formData.passWord}
+              onChange={handleChange}
+              placeholder={initialData ? "Leave blank to keep current password" : "Enter password"}
+              className="input input-bordered w-full"
+              // Required only if not initialData (i.e., creating new user)
+              required={!initialData} 
+            />
+          </div>
+          <div>
+            <label className="label">
+              <span className="label-text">User Type</span>
+            </label>
+            <select
+              name="userType"
+              value={formData.userType}
+              onChange={handleChange}
+              className="select select-bordered w-full"
+            >
+              <option value="WORKER">Worker</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <div className="modal-action mt-6">
+            <button type="button" className="btn btn-ghost mr-2" onClick={() => { onClose(); modalRef.current?.close();}}>Cancel</button>
+            <button type="submit" className="btn btn-primary">{submitButtonText}</button>
+          </div>
+        </form>
+      </div>
+       <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+};
+
+export default UserForm;
+
+// -------------------------------------------------------------------
+// File: src/components/crud/UsersTable.js
+// -------------------------------------------------------------------
+import React from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+
+const UsersTable = ({ users, onEdit, onDelete }) => {
+  if (!users || users.length === 0) {
+    return <p className="text-center text-gray-500 py-4">No users found.</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto shadow-lg rounded-lg bg-base-100">
+      <table className="table w-full">
+        <thead>
+          <tr className="bg-base-200">
+            <th>User ID</th>
+            <th>Username</th>
+            <th>User Type</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(user => (
+            <tr key={user.userId} className="hover">
+              <td>{user.userId}</td>
+              <td>{user.userName}</td>
+              <td><span className={`badge ${user.userType === 'ADMIN' ? 'badge-primary' : 'badge-secondary'}`}>{user.userType}</span></td>
+              <td>
+                <button onClick={() => onEdit(user)} className="btn btn-sm btn-outline btn-info mr-2 p-2">
+                  <FaEdit />
+                </button>
+                <button onClick={() => onDelete(user.userId, user.userName)} className="btn btn-sm btn-outline btn-error p-2">
+                  <FaTrash />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default UsersTable;
+
+// -------------------------------------------------------------------
+// File: src/pages/admin/ManageUsersPage.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useCallback } from 'react';
+import UsersTable from '../../components/crud/UsersTable';
+import UserForm from '../../components/crud/UserForm';
+import DeleteConfirmationModal from '../../components/crud/DeleteConfirmationModal';
+import { FaPlus } from 'react-icons/fa';
+
+const API_URL = 'http://localhost:3004/api/users';
+
+const ManageUsersPage = () => {
+  const [users, setUsers] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null); // { id: userId, name: userName }
+
+  const [feedbackMessage, setFeedbackMessage] = useState({ type: '', text: '' });
+
+
+  const fetchUsers = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      setUsers(data);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to fetch users: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const handleFormSubmit = async (formData) => {
+    setIsLoading(true);
+    setFeedbackMessage({ type: '', text: '' });
+    const method = editingUser ? 'PUT' : 'POST';
+    const url = editingUser ? `${API_URL}/${editingUser.userId}` : API_URL;
+    
+    // For PUT, if password is empty, don't send it
+    const payload = { ...formData };
+    if (editingUser && !payload.passWord) {
+      delete payload.passWord;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Operation failed with status ' + response.status }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      setFeedbackMessage({ type: 'success', text: `User ${editingUser ? 'updated' : 'created'} successfully!` });
+      fetchUsers(); // Refresh list
+      setIsFormOpen(false);
+      setEditingUser(null);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to ${editingUser ? 'update' : 'create'} user: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (user) => {
+    setEditingUser(user);
+    setIsFormOpen(true);
+    setFeedbackMessage({ type: '', text: '' });
+  };
+
+  const handleDelete = (userId, userName) => {
+    setUserToDelete({ id: userId, name: userName });
+    setIsDeleteModalOpen(true);
+    setFeedbackMessage({ type: '', text: '' });
+  };
+
+  const confirmDelete = async () => {
+    if (!userToDelete) return;
+    setIsLoading(true);
+    setFeedbackMessage({ type: '', text: '' });
+    try {
+      const response = await fetch(`${API_URL}/${userToDelete.id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Operation failed with status ' + response.status }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      setFeedbackMessage({ type: 'success', text: `User "${userToDelete.name}" deleted successfully!` });
+      fetchUsers(); // Refresh list
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to delete user: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-2 sm:p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Manage Users</h1>
+        <button onClick={() => { setEditingUser(null); setIsFormOpen(true); setFeedbackMessage({ type: '', text: '' });}} className="btn btn-primary">
+          <FaPlus className="mr-2" /> Add New User
+        </button>
+      </div>
+
+      {feedbackMessage.text && (
+        <div className={`alert ${feedbackMessage.type === 'error' ? 'alert-error' : 'alert-success'} shadow-sm mb-4 p-3 text-sm`}>
+          {feedbackMessage.text}
+        </div>
+      )}
+      
+      {isLoading && <div className="text-center py-4"><span className="loading loading-lg loading-spinner text-primary"></span></div>}
+      {!isLoading && error && !feedbackMessage.text && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">Error: {error}</div>}
+      
+      {!isLoading && !error && <UsersTable users={users} onEdit={handleEdit} onDelete={handleDelete} />}
+      
+      <UserForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onSubmit={handleFormSubmit} 
+        initialData={editingUser}
+      />
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={userToDelete?.name}
+      />
+    </div>
+  );
+};
+
+export default ManageUsersPage;
+
+
+// -------------------------------------------------------------------
+// File: src/components/crud/ProductForm.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useRef } from 'react';
+
+const ProductForm = ({ isOpen, onClose, onSubmit, initialData }) => {
+  const [formData, setFormData] = useState({
+    productID: '',
+    productName: '',
+    buyUnitPrice: '',
+    sellUnitPrice: '',
+  });
+  const [error, setError] = useState('');
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        productID: initialData.productID || '',
+        productName: initialData.productName || '',
+        buyUnitPrice: initialData.buyUnitPrice || '',
+        sellUnitPrice: initialData.sellUnitPrice || '',
+      });
+    } else {
+      setFormData({ productID: '', productName: '', buyUnitPrice: '', sellUnitPrice: '' });
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (isOpen) {
+      modalRef.current?.showModal();
+      setError('');
+    } else {
+      modalRef.current?.close();
+    }
+  }, [isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.productID || !formData.productName || !formData.buyUnitPrice || !formData.sellUnitPrice) {
+      setError('All fields are required.');
+      return;
+    }
+    if (isNaN(parseFloat(formData.buyUnitPrice)) || isNaN(parseFloat(formData.sellUnitPrice))) {
+        setError('Buy and Sell prices must be valid numbers.');
+        return;
+    }
+     if (parseFloat(formData.buyUnitPrice) < 0 || parseFloat(formData.sellUnitPrice) < 0) {
+        setError('Prices cannot be negative.');
+        return;
+    }
+    onSubmit(formData);
+  };
+  
+  const formTitle = initialData ? "Edit Product" : "Add New Product";
+  const submitButtonText = initialData ? "Update Product" : "Create Product";
+
+  if (!isOpen) return null;
+
+  return (
+    <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
+      <div className="modal-box w-11/12 max-w-lg">
+        <h3 className="font-bold text-xl mb-6 text-primary">{formTitle}</h3>
+        {error && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label"><span className="label-text">Product ID</span></label>
+            <input 
+              type="number" name="productID" value={formData.productID} onChange={handleChange} 
+              placeholder="Enter product ID" 
+              className="input input-bordered w-full" 
+              required 
+              disabled={!!initialData} // Disable Product ID field when editing
+            />
+            {initialData && <p className="text-xs text-gray-500 mt-1">Product ID cannot be changed after creation.</p>}
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Product Name</span></label>
+            <input type="text" name="productName" value={formData.productName} onChange={handleChange} placeholder="Enter product name" className="input input-bordered w-full" required />
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Buy Unit Price ($)</span></label>
+            <input type="number" name="buyUnitPrice" value={formData.buyUnitPrice} onChange={handleChange} placeholder="0.00" className="input input-bordered w-full" step="0.01" min="0" required />
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Sell Unit Price ($)</span></label>
+            <input type="number" name="sellUnitPrice" value={formData.sellUnitPrice} onChange={handleChange} placeholder="0.00" className="input input-bordered w-full" step="0.01" min="0" required />
+          </div>
+          <div className="modal-action mt-6">
+             <button type="button" className="btn btn-ghost mr-2" onClick={() => { onClose(); modalRef.current?.close();}}>Cancel</button>
+            <button type="submit" className="btn btn-primary">{submitButtonText}</button>
+          </div>
+        </form>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+};
+
+export default ProductForm;
+
+// -------------------------------------------------------------------
+// File: src/components/crud/ProductsTable.js
+// -------------------------------------------------------------------
+import React from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+
+const ProductsTable = ({ products, onEdit, onDelete }) => {
+  if (!products || products.length === 0) {
+    return <p className="text-center text-gray-500 py-4">No products found.</p>;
+  }
+
+  return (
+    <div className="overflow-x-auto shadow-lg rounded-lg bg-base-100">
+      <table className="table w-full">
+        <thead>
+          <tr className="bg-base-200">
+            <th>ID</th>
+            <th>Name</th>
+            <th>Buy Price</th>
+            <th>Sell Price</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map(product => (
+            <tr key={product.productID} className="hover">
+              <td>{product.productID}</td>
+              <td>{product.productName}</td>
+              <td>${parseFloat(product.buyUnitPrice).toFixed(2)}</td>
+              <td>${parseFloat(product.sellUnitPrice).toFixed(2)}</td>
+              <td>
+                <button onClick={() => onEdit(product)} className="btn btn-sm btn-outline btn-info mr-2 p-2">
+                  <FaEdit />
+                </button>
+                <button onClick={() => onDelete(product.productID, product.productName)} className="btn btn-sm btn-outline btn-error p-2">
+                  <FaTrash />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default ProductsTable;
+
+// -------------------------------------------------------------------
+// File: src/pages/admin/ManageProductsPage.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useCallback } from 'react';
+import ProductsTable from '../../components/crud/ProductsTable';
+import ProductForm from '../../components/crud/ProductForm';
+import DeleteConfirmationModal from '../../components/crud/DeleteConfirmationModal';
+import { FaPlus } from 'react-icons/fa';
+
+const API_URL = 'http://localhost:3004/api/products';
+
+const ManageProductsPage = () => {
+  const [products, setProducts] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null); // { id: productId, name: productName }
+
+  const [feedbackMessage, setFeedbackMessage] = useState({ type: '', text: '' });
+
+  const fetchProducts = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      setProducts(data);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to fetch products: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  const handleFormSubmit = async (formData) => {
+    setIsLoading(true);
+    setFeedbackMessage({ type: '', text: '' });
+    const method = editingProduct ? 'PUT' : 'POST';
+    const url = editingProduct ? `${API_URL}/${editingProduct.productID}` : API_URL;
+    
+    const payload = {
+        ...formData,
+        buyUnitPrice: parseFloat(formData.buyUnitPrice),
+        sellUnitPrice: parseFloat(formData.sellUnitPrice),
+    };
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Operation failed' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      setFeedbackMessage({ type: 'success', text: `Product ${editingProduct ? 'updated' : 'created'} successfully!` });
+      fetchProducts();
+      setIsFormOpen(false);
+      setEditingProduct(null);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to ${editingProduct ? 'update' : 'create'} product: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (product) => {
+    setEditingProduct(product);
+    setIsFormOpen(true);
+    setFeedbackMessage({ type: '', text: '' });
+  };
+
+  const handleDelete = (productId, productName) => {
+    setProductToDelete({ id: productId, name: productName });
+    setIsDeleteModalOpen(true);
+    setFeedbackMessage({ type: '', text: '' });
+  };
+
+  const confirmDelete = async () => {
+    if (!productToDelete) return;
+    setIsLoading(true);
+    setFeedbackMessage({ type: '', text: '' });
+    try {
+      const response = await fetch(`${API_URL}/${productToDelete.id}`, { method: 'DELETE' });
+      if (!response.ok) {
+         const errorData = await response.json().catch(() => ({ message: 'Operation failed' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      setFeedbackMessage({ type: 'success', text: `Product "${productToDelete.name}" deleted successfully!` });
+      fetchProducts();
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to delete product: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-2 sm:p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Manage Products</h1>
+        <button onClick={() => { setEditingProduct(null); setIsFormOpen(true); setFeedbackMessage({ type: '', text: '' });}} className="btn btn-primary">
+          <FaPlus className="mr-2" /> Add New Product
+        </button>
+      </div>
+
+      {feedbackMessage.text && (
+        <div className={`alert ${feedbackMessage.type === 'error' ? 'alert-error' : 'alert-success'} shadow-sm mb-4 p-3 text-sm`}>
+          {feedbackMessage.text}
+        </div>
+      )}
+
+      {isLoading && <div className="text-center py-4"><span className="loading loading-lg loading-spinner text-primary"></span></div>}
+      {!isLoading && error && !feedbackMessage.text && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">Error: {error}</div>}
+      
+      {!isLoading && !error && <ProductsTable products={products} onEdit={handleEdit} onDelete={handleDelete} />}
+      
+      <ProductForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onSubmit={handleFormSubmit} 
+        initialData={editingProduct}
+      />
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={productToDelete?.name}
+      />
+    </div>
+  );
+};
+
+export default ManageProductsPage;
+
+// -------------------------------------------------------------------
+// File: src/components/crud/StockInForm.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useRef } from 'react';
+
+const StockInForm = ({ isOpen, onClose, onSubmit, initialData, productsList }) => {
+  const [formData, setFormData] = useState({
+    // Assuming your backend returns/expects 'id' for stock records
+    // If not, this 'id' is just for frontend tracking if initialData has it
+    id: '', 
+    productID: '',
+    quantity: '',
+    date: new Date().toISOString().split('T')[0], // Default to today
+  });
+  const [error, setError] = useState('');
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        id: initialData.id || '', // Keep track of actual stock record ID if available
+        productID: initialData.productID || '',
+        quantity: initialData.quantity || '',
+        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      });
+    } else {
+      setFormData({ id: '', productID: '', quantity: '', date: new Date().toISOString().split('T')[0] });
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (isOpen) {
+      modalRef.current?.showModal();
+      setError('');
+    } else {
+      modalRef.current?.close();
+    }
+  }, [isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.productID || !formData.quantity || !formData.date) {
+      setError('All fields are required.');
+      return;
+    }
+    if (isNaN(parseInt(formData.quantity)) || parseInt(formData.quantity) <= 0) {
+        setError('Quantity must be a positive number.');
+        return;
+    }
+    // Remove 'id' before sending if it's a new record, or if your backend doesn't expect it in payload
+    const payload = { ...formData };
+    if (!initialData) delete payload.id; 
+
+    onSubmit(payload);
+  };
+
+  const formTitle = initialData ? "Edit Stock In Record" : "Add New Stock In Record";
+  const submitButtonText = initialData ? "Update Record" : "Create Record";
+
+  if (!isOpen) return null;
+
+  return (
+    <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
+      <div className="modal-box w-11/12 max-w-lg">
+        <h3 className="font-bold text-xl mb-6 text-primary">{formTitle}</h3>
+        {error && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label"><span className="label-text">Product</span></label>
+            <select 
+              name="productID" 
+              value={formData.productID} 
+              onChange={handleChange} 
+              className="select select-bordered w-full" 
+              required
+              disabled={!!initialData && !!initialData.id} // Disable if editing an existing record with an ID
+            >
+              <option value="" disabled>Select a product</option>
+              {productsList && productsList.map(p => (
+                <option key={p.productID} value={p.productID}>{p.productName} (ID: {p.productID})</option>
+              ))}
+            </select>
+            {initialData && initialData.id && <p className="text-xs text-gray-500 mt-1">Product cannot be changed for existing records.</p>}
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Quantity</span></label>
+            <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} placeholder="Enter quantity" className="input input-bordered w-full" min="1" required />
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Date</span></label>
+            <input 
+              type="date" name="date" value={formData.date} onChange={handleChange} 
+              className="input input-bordered w-full" 
+              required 
+              disabled={!!initialData && !!initialData.id} // Disable if editing an existing record with an ID
+            />
+             {initialData && initialData.id && <p className="text-xs text-gray-500 mt-1">Date cannot be changed for existing records.</p>}
+          </div>
+          <div className="modal-action mt-6">
+            <button type="button" className="btn btn-ghost mr-2" onClick={() => { onClose(); modalRef.current?.close();}}>Cancel</button>
+            <button type="submit" className="btn btn-primary">{submitButtonText}</button>
+          </div>
+        </form>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+};
+
+export default StockInForm;
+
+// -------------------------------------------------------------------
+// File: src/components/crud/StockInTable.js
+// -------------------------------------------------------------------
+import React from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
+
+const StockInTable = ({ stockRecords, productsList, onEdit, onDelete }) => {
+  if (!stockRecords || stockRecords.length === 0) {
+    return <p className="text-center text-gray-500 py-4">No stock-in records found.</p>;
+  }
+
+  const getProductName = (productId) => {
+    const product = productsList.find(p => p.productID === productId);
+    return product ? product.productName : 'Unknown Product';
+  };
+
+  return (
+    <div className="overflow-x-auto shadow-lg rounded-lg bg-base-100">
+      <table className="table w-full">
+        <thead>
+          <tr className="bg-base-200">
+            {/* Assuming your backend provides a unique 'id' for each stock record */}
+            <th>Record ID</th> 
+            <th>Product Name (ID)</th>
+            <th>Quantity</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stockRecords.map(record => (
+            <tr key={record.id || `${record.productID}-${record.date}`} className="hover"> {/* Fallback key if no id */}
+              <td>{record.id || 'N/A'}</td>
+              <td>{getProductName(record.productID)} ({record.productID})</td>
+              <td>{record.quantity}</td>
+              <td>{new Date(record.date).toLocaleDateString()}</td>
+              <td>
+                {/* Edit/Delete might be disabled if 'id' is not present, indicating non-unique record from backend */}
+                <button 
+                  onClick={() => onEdit(record)} 
+                  className="btn btn-sm btn-outline btn-info mr-2 p-2"
+                  disabled={!record.id} // Disable if no unique ID
+                >
+                  <FaEdit />
+                </button>
+                <button 
+                  onClick={() => onDelete(record.id, `${getProductName(record.productID)} on ${new Date(record.date).toLocaleDateString()}`)} 
+                  className="btn btn-sm btn-outline btn-error p-2"
+                  disabled={!record.id} // Disable if no unique ID
+                >
+                  <FaTrash />
+                </button>
+                 {!record.id && <span className="text-xs text-warning"> (Actions disabled: No unique ID)</span>}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default StockInTable;
+
+// -------------------------------------------------------------------
+// File: src/pages/admin/ManageStockInPage.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useCallback } from 'react';
+import StockInTable from '../../components/crud/StockInTable';
+import StockInForm from '../../components/crud/StockInForm';
+import DeleteConfirmationModal from '../../components/crud/DeleteConfirmationModal';
+import { FaPlus } from 'react-icons/fa';
+
+const API_STOCK_IN_URL = 'http://localhost:3004/api/stock_in';
+const API_PRODUCTS_URL = 'http://localhost:3004/api/products';
+
+const ManageStockInPage = () => {
+  const [stockRecords, setStockRecords] = useState([]);
+  const [productsList, setProductsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
+  
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState(null); // { id: recordId, name: description }
+
+  const [feedbackMessage, setFeedbackMessage] = useState({ type: '', text: '' });
+
+  const fetchProducts = useCallback(async () => {
+    try {
+      const response = await fetch(API_PRODUCTS_URL);
+      if (!response.ok) throw new Error('Failed to fetch products');
+      const data = await response.json();
+      setProductsList(data);
+    } catch (e) {
+      setError(e.message); // Or handle more gracefully
+      setFeedbackMessage({ type: 'error', text: `Failed to fetch products: ${e.message}` });
+    }
+  }, []);
+  
+  const fetchStockInRecords = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(API_STOCK_IN_URL);
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const data = await response.json();
+      // IMPORTANT: Assuming backend returns a unique 'id' for each stock_in record.
+      // If not, PUT/DELETE operations will be problematic.
+      setStockRecords(data); 
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to fetch stock-in records: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchStockInRecords();
+  }, [fetchProducts, fetchStockInRecords]);
+
+  const handleFormSubmit = async (formData) => {
+    setIsLoading(true);
+    setFeedbackMessage({ type: '', text: '' });
+    // Your schema for Stock_In doesn't have its own primary key.
+    // The API for PUT/DELETE needs a unique identifier.
+    // Assuming your backend POST returns the created record with an 'id',
+    // or that PUT uses productID+date if 'id' is not present.
+    // For this example, we assume 'id' is used for PUT if present in `editingRecord`.
+    const method = editingRecord && editingRecord.id ? 'PUT' : 'POST';
+    const url = editingRecord && editingRecord.id ? `${API_STOCK_IN_URL}/${editingRecord.id}` : API_STOCK_IN_URL;
+    
+    const payload = {
+        productID: parseInt(formData.productID),
+        quantity: parseInt(formData.quantity),
+        date: formData.date,
+    };
+    // If it's an update and we have an ID, include it (some backends might expect it in body too)
+    // if (editingRecord && editingRecord.id) {
+    //   payload.id = editingRecord.id;
+    // }
+
+
+    try {
+      const response = await fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Operation failed' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      setFeedbackMessage({ type: 'success', text: `Stock-in record ${editingRecord ? 'updated' : 'created'} successfully!` });
+      fetchStockInRecords();
+      setIsFormOpen(false);
+      setEditingRecord(null);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to ${editingRecord ? 'update' : 'create'} record: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEdit = (record) => {
+    if (!record.id) {
+        setFeedbackMessage({ type: 'error', text: 'Cannot edit record without a unique ID.' });
+        return;
+    }
+    setEditingRecord(record);
+    setIsFormOpen(true);
+    setFeedbackMessage({ type: '', text: '' });
+  };
+
+  const handleDelete = (recordId, recordName) => {
+     if (!recordId) {
+        setFeedbackMessage({ type: 'error', text: 'Cannot delete record without a unique ID.' });
+        return;
+    }
+    setRecordToDelete({ id: recordId, name: recordName });
+    setIsDeleteModalOpen(true);
+    setFeedbackMessage({ type: '', text: '' });
+  };
+
+  const confirmDelete = async () => {
+    if (!recordToDelete || !recordToDelete.id) return;
+    setIsLoading(true);
+    setFeedbackMessage({ type: '', text: '' });
+    try {
+      const response = await fetch(`${API_STOCK_IN_URL}/${recordToDelete.id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Operation failed' }));
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+      setFeedbackMessage({ type: 'success', text: `Stock-in record deleted successfully!` });
+      fetchStockInRecords();
+      setIsDeleteModalOpen(false);
+      setRecordToDelete(null);
+    } catch (e) {
+      setError(e.message);
+      setFeedbackMessage({ type: 'error', text: `Failed to delete record: ${e.message}` });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-2 sm:p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary">Manage Stock In</h1>
+        <button onClick={() => { setEditingRecord(null); setIsFormOpen(true); setFeedbackMessage({ type: '', text: '' });}} className="btn btn-primary">
+          <FaPlus className="mr-2" /> Add Stock In Record
+        </button>
+      </div>
+
+       {feedbackMessage.text && (
+        <div className={`alert ${feedbackMessage.type === 'error' ? 'alert-error' : 'alert-success'} shadow-sm mb-4 p-3 text-sm`}>
+          {feedbackMessage.text}
+        </div>
+      )}
+
+      {isLoading && <div className="text-center py-4"><span className="loading loading-lg loading-spinner text-primary"></span></div>}
+      {!isLoading && error && !feedbackMessage.text && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">Error: {error}</div>}
+      
+      {!isLoading && !error && <StockInTable stockRecords={stockRecords} productsList={productsList} onEdit={handleEdit} onDelete={handleDelete} />}
+      
+      <StockInForm 
+        isOpen={isFormOpen} 
+        onClose={() => setIsFormOpen(false)} 
+        onSubmit={handleFormSubmit} 
+        initialData={editingRecord}
+        productsList={productsList}
+      />
+      <DeleteConfirmationModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDelete}
+        itemName={recordToDelete?.name}
+      />
+    </div>
+  );
+};
+
+export default ManageStockInPage;
+
+
+// -------------------------------------------------------------------
+// File: src/components/crud/StockOutForm.js
+// -------------------------------------------------------------------
+import React, { useState, useEffect, useRef } from 'react';
+
+const StockOutForm = ({ isOpen, onClose, onSubmit, initialData, productsList }) => {
+  const [formData, setFormData] = useState({
+    id: '', // Assuming your backend returns/expects 'id' for stock records
+    productID: '',
+    quantity: '',
+    date: new Date().toISOString().split('T')[0],
+  });
+  const [error, setError] = useState('');
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        id: initialData.id || '',
+        productID: initialData.productID || '',
+        quantity: initialData.quantity || '',
+        date: initialData.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      });
+    } else {
+      setFormData({ id: '', productID: '', quantity: '', date: new Date().toISOString().split('T')[0] });
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    if (isOpen) {
+      modalRef.current?.showModal();
+      setError('');
+    } else {
+      modalRef.current?.close();
+    }
+  }, [isOpen]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.productID || !formData.quantity || !formData.date) {
+      setError('All fields are required.');
+      return;
+    }
+    if (isNaN(parseInt(formData.quantity)) || parseInt(formData.quantity) <= 0) {
+        setError('Quantity must be a positive number.');
+        return;
+    }
+    const payload = { ...formData };
+    if (!initialData) delete payload.id;
+    onSubmit(payload);
+  };
+  
+  const formTitle = initialData ? "Edit Stock Out Record" : "Add New Stock Out Record";
+  const submitButtonText = initialData ? "Update Record" : "Create Record";
+
+  if (!isOpen) return null;
+
+  return (
+    <dialog ref={modalRef} className="modal modal-bottom sm:modal-middle">
+      <div className="modal-box w-11/12 max-w-lg">
+        <h3 className="font-bold text-xl mb-6 text-primary">{formTitle}</h3>
+        {error && <div className="alert alert-error shadow-sm mb-4 p-3 text-sm">{error}</div>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="label"><span className="label-text">Product</span></label>
+            <select name="productID" value={formData.productID} onChange={handleChange} className="select select-bordered w-full" required disabled={!!initialData && !!initialData.id}>
+              <option value="" disabled>Select a product</option>
+              {productsList && productsList.map(p => (
+                <option key={p.productID} value={p.productID}>{p.productName} (ID: {p.productID})</option>
+              ))}
+            </select>
+            {initialData && initialData.id && <p className="text-xs text-gray-500 mt-1">Product cannot be changed for existing records.</p>}
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Quantity</span></label>
+            <input type="number" name="quantity" value={formData.quantity} onChange={handleChange} placeholder="Enter quantity" className="input input-bordered w-full" min="1" required />
+          </div>
+          <div>
+            <label className="label"><span className="label-text">Date</span></label>
+            <input type="date" name="date" value={formData.date} onChange={handleChange} className="input input-bordered w-full" required disabled={!!initialData && !!initialData.id}/>
+            {initialData && initialData.id && <p className="text-xs text-gray-500 mt-1">Date cannot be changed for existing records.</p>}
+          </div>
+          <div className="modal-action mt-6">
+            <button type="button" className="btn btn-ghost mr-2" onClick={() => { onClose(); modalRef.current?.close();}}>Cancel</button>
+            <button type="submit" className="btn btn-primary">{submitButtonText}</button>
+          </div>
+        </form>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+};
+
+export default StockOutForm;
