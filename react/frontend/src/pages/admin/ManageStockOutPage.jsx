@@ -4,8 +4,7 @@ import StockOutForm from '../../components/crud/StockOutForm';
 import DeleteConfirmationModal from '../../components/crud/DeleteConfirmationModal';
 import StockOutTable from '../../components/crud/StockOutTable';
 
-const API_STOCK_OUT_URL = 'http://localhost:3004/api/stock_out';
-// const API_PRODUCTS_URL = 'http://localhost:3004/api/products'; // Already defined in StockIn, ensure consistency
+const API_STOCK_OUT_URL = 'http://localhost:3004/api/stock/out';
 
 const ManageStockOutPage = () => {
   const [stockRecords, setStockRecords] = useState([]);

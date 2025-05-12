@@ -1,4 +1,4 @@
-DROP DATABASE Juice_Depot;
+DROP DATABASE IF EXISTS Juice_Depot;
 CREATE DATABASE Juice_Depot;
 USE Juice_Depot;
 
@@ -10,13 +10,14 @@ CREATE TABLE Users (
 );
 
 CREATE TABLE Products (
-    productID INT PRIMARY KEY,
+    productID INT AUTO_INCREMENT PRIMARY KEY,
     productName VARCHAR(255),
     buyUnitPrice DECIMAL(10, 2),
     sellUnitPrice DECIMAL(10, 2)
 );
 
 CREATE TABLE Stock_In (
+    stockInID INT AUTO_INCREMENT PRIMARY KEY,
     productID INT,
     quantity INT,
     date DATE,
@@ -24,6 +25,7 @@ CREATE TABLE Stock_In (
 );
 
 CREATE TABLE Stock_Out (
+    stockOutID INT AUTO_INCREMENT PRIMARY KEY,
     productID INT,
     quantity INT,
     date DATE,

@@ -4,7 +4,7 @@ import StockInForm from '../../components/crud/StockInForm';
 import DeleteConfirmationModal from '../../components/crud/DeleteConfirmationModal';
 import { FaPlus } from 'react-icons/fa';
 
-const API_STOCK_IN_URL = 'http://localhost:3004/api/stock_in';
+const API_STOCK_IN_URL = 'http://localhost:3004/api/stock/in';
 const API_PRODUCTS_URL = 'http://localhost:3004/api/products';
 
 const ManageStockInPage = () => {
