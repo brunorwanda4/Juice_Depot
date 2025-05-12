@@ -5,8 +5,8 @@ USE Juice_Depot;
 CREATE TABLE Users (
     userId INT AUTO_INCREMENT PRIMARY KEY,
     userName VARCHAR(255),
-    passWord VARCHAR(255),
     userType VARCHAR(50)
+    passWord VARCHAR(255),
 );
 
 CREATE TABLE Products (
