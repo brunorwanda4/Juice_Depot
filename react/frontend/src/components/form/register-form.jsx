@@ -38,7 +38,7 @@ const RegisterForm = () => {
 
       // Reset form
       setUsername("");
-      setPassword("");
+      setPassword(""); 
       setUserType("WORKER");
       navigate("/")
     } catch (error) {

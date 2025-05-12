@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import StockOutTable from '../../components/crud/StockOutTable';
+import { FaPlus } from 'react-icons/fa';
 import StockOutForm from '../../components/crud/StockOutForm';
 import DeleteConfirmationModal from '../../components/crud/DeleteConfirmationModal';
-import { FaPlus } from 'react-icons/fa';
+import StockOutTable from '../../components/crud/StockOutTable';
 
 const API_STOCK_OUT_URL = 'http://localhost:3004/api/stock_out';
 // const API_PRODUCTS_URL = 'http://localhost:3004/api/products'; // Already defined in StockIn, ensure consistency
@@ -152,7 +152,7 @@ const ManageStockOutPage = () => {
       
       {!isLoading && !error && <StockOutTable stockRecords={stockRecords} productsList={productsList} onEdit={handleEdit} onDelete={handleDelete} />}
       
-      <StockOutForm 
+      <StockOutForm
         isOpen={isFormOpen} 
         onClose={() => setIsFormOpen(false)} 
         onSubmit={handleFormSubmit} 
