@@ -6,7 +6,6 @@ exports.createProduct = (req, res) => {
   const { productName, buyUnitPrice, sellUnitPrice } = req.body;
 
   if (
-    !productID ||
     !productName ||
     buyUnitPrice === undefined ||
     sellUnitPrice === undefined
@@ -19,7 +18,6 @@ exports.createProduct = (req, res) => {
     return res.status(400).json({ message: "Prices must be valid numbers." });
   }
   if (
-    parseInt(productID) <= 0 ||
     parseFloat(buyUnitPrice) < 0 ||
     parseFloat(sellUnitPrice) < 0
   ) {
@@ -29,7 +27,7 @@ exports.createProduct = (req, res) => {
   }
 
   db.query(
-    "INSERT INTO Products ( productName, buyUnitPrice, sellUnitPrice) VALUES (?, ?, ?, ?)",
+    "INSERT INTO Products ( productName, buyUnitPrice, sellUnitPrice) VALUES (?, ?, ?)",
     [productName, parseFloat(buyUnitPrice), parseFloat(sellUnitPrice)],
     (err, result) => {
       if (err) {

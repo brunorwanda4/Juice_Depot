@@ -4,12 +4,12 @@ const bcrypt = require("bcrypt");
 
 // User Signup (Create) - Based on your example
 exports.signup = (req, res) => {
-  const { username, password, userType } = req.body;
+  const { userName, passWord, userType } = req.body;
 
-  if (!username || !password || !userType) {
+  if (!userName || !passWord || !userType) {
     return res
       .status(400)
-      .json({ message: "Username, password, and userType are required." });
+      .json({ message: "userName, passWord, and userType are required." });
   }
 
   if (userType !== "ADMIN" && userType !== "WORKER") {
@@ -20,7 +20,7 @@ exports.signup = (req, res) => {
 
   db.query(
     "SELECT * FROM Users WHERE userName = ?",
-    [username],
+    [userName],
     (err, existingUsers) => {
       if (err) {
         console.error("Database error checking user existence:", err);
@@ -37,11 +37,11 @@ exports.signup = (req, res) => {
       }
 
       bcrypt
-        .hash(password, 10)
+        .hash(passWord, 10)
         .then((hashedPassword) => {
           db.query(
             "INSERT INTO Users (userName, passWord, userType) VALUES (?, ?, ?)",
-            [username, hashedPassword, userType],
+            [userName, hashedPassword, userType],
             (insertErr, insertResult) => {
               if (insertErr) {
                 console.error("Database error creating user:", insertErr);
@@ -56,7 +56,7 @@ exports.signup = (req, res) => {
                 return res.status(201).json({
                   message: "Account created successfully.",
                   userId: insertResult.insertId,
-                  username: username,
+                  username: userName,
                   userType: userType,
                 });
               } else {
@@ -120,7 +120,7 @@ exports.getUserById = (req, res) => {
 // Update user (Update) - e.g., change password or userType
 exports.updateUser = (req, res) => {
   const { userId } = req.params;
-  const { password, userType } = req.body;
+  const { password, userType, userName } = req.body;
 
   if (!password && !userType) {
     return res
@@ -131,6 +131,11 @@ exports.updateUser = (req, res) => {
   let query = "UPDATE Users SET ";
   const queryParams = [];
 
+  if (userName) {
+    query += "userName = ?";
+    queryParams.push(userName);
+  }
+
   if (password) {
     const hashedPassword = bcrypt.hashSync(password, 10);
     query += "passWord = ?";
@@ -139,9 +144,9 @@ exports.updateUser = (req, res) => {
 
   if (userType) {
     if (userType !== "ADMIN" && userType !== "WORKER") {
-        return res.status(400).json({
-          message: `Your user type '${userType}' is not supported. Choose ADMIN or WORKER.`,
-        });
+      return res.status(400).json({
+        message: `Your user type '${userType}' is not supported. Choose ADMIN or WORKER.`,
+      });
     }
     if (queryParams.length > 0) query += ", ";
     query += "userType = ?";
@@ -159,7 +164,9 @@ exports.updateUser = (req, res) => {
         .json({ message: "Failed to update user.", error: err.message });
     }
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "User not found or no changes made." });
+      return res
+        .status(404)
+        .json({ message: "User not found or no changes made." });
     }
     res.status(200).json({ message: "User updated successfully." });
   });
